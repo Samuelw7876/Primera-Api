@@ -1,28 +1,24 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-class UsuarioLogin(BaseModel):
-    nombre_usuario: str
-    contrasena: str
-
 class Servicio(BaseModel):
     id: int
     nombre: str
     descripcion: str
     endpoints: List[str]
 
-class ServicioInput(BaseModel):
-    nombre: str
-    descripcion: str
-    endpoints: List[str]
+class Usuario(BaseModel):
+    nombre_usuario: str
+    contrasena: str
+    rol: str  # "Administrador", "Orquestador", etc.
 
-class OrquestacionInput(BaseModel):
+class Orquestacion(BaseModel):
     servicio_destino: str
-    parametros_adicionales: Optional[str] = None
+    parametros_adicionales: Optional[dict] = {}
 
 class ReglaOrquestacion(BaseModel):
-    reglas: str
+    reglas: dict
 
-class AutorizacionInput(BaseModel):
+class Acceso(BaseModel):
     recursos: List[str]
     rol_usuario: str

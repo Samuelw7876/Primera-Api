@@ -1,18 +1,23 @@
-USUARIOS = {
-    "admin": {"password": "admin123", "rol": "Administrador"},
-    "orquestador": {"password": "orq123", "rol": "Orquestador"},
-    "usuario": {"password": "user123", "rol": "Usuario"}
+from fastapi import HTTPException
+import secrets
+
+usuarios = {
+    "admin": {"contrasena": "1234", "rol": "Administrador"},
+    "orquestador": {"contrasena": "abcd", "rol": "Orquestador"},
 }
 
-TOKENS = {}
+tokens = {}
 
-def autenticar_usuario(nombre_usuario: str, contrasena: str) -> str:
-    usuario = USUARIOS.get(nombre_usuario)
-    if usuario and usuario["password"] == contrasena:
-        token = f"token_{nombre_usuario}"
-        TOKENS[token] = usuario["rol"]
-        return token
-    return ""
+def autenticar_usuario(nombre_usuario: str, contrasena: str):
+    user = usuarios.get(nombre_usuario)
+    if not user or user["contrasena"] != contrasena:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    token = secrets.token_hex(16)
+    tokens[token] = user["rol"]
+    return {"access_token": token, "rol": user["rol"]}
 
-def obtener_rol_por_token(token: str) -> str:
-    return TOKENS.get(token, "")
+def verificar_token(token: str, roles_permitidos: list):
+    rol = tokens.get(token)
+    if not rol or rol not in roles_permitidos:
+        raise HTTPException(status_code=403, detail="Acceso no autorizado")
+    return rol

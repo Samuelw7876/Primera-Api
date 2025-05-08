@@ -1,93 +1,42 @@
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import HTMLResponse
+from auth import autenticar_usuario, verificar_token
+from services import *
 from models import *
-from auth import autenticar_usuario, obtener_rol_por_token
-from services import registrar_servicio, listar_servicios, obtener_servicio
 
 app = FastAPI()
 
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    return """
-    <html>
-    <head><title>API Logística</title></head>
-    <body>
-      <h1>Bienvenido a la API de Logística Global</h1>
-
-      <h2>Login</h2>
-      <input id="user" placeholder="Usuario" />
-      <input id="pass" type="password" placeholder="Contraseña" />
-      <button onclick="login()">Iniciar Sesión</button>
-      <p id="tokenMsg"></p>
-
-      <h2>Registrar Servicio</h2>
-      <input id="nombre" placeholder="Nombre Servicio" />
-      <input id="desc" placeholder="Descripción" />
-      <input id="endpoints" placeholder="Endpoints separados por coma" />
-      <button onclick="registrarServicio()">Registrar</button>
-
-      <h2>Ver Servicios</h2>
-      <button onclick="listar()">Listar Servicios</button>
-      <ul id="servicios"></ul>
-
-      <script>
-        let token = "";
-
-        async function login() {
-          const user = document.getElementById("user").value;
-          const pass = document.getElementById("pass").value;
-          const res = await fetch("/autenticar-usuario", {
-            method: "POST",
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nombre_usuario: user, contrasena: pass })
-          });
-          const data = await res.text();
-          token = data;
-          document.getElementById("tokenMsg").innerText = "Token recibido: " + token;
-        }
-
-        async function registrarServicio() {
-          const nombre = document.getElementById("nombre").value;
-          const descripcion = document.getElementById("desc").value;
-          const endpoints = document.getElementById("endpoints").value.split(",");
-          const res = await fetch("/registrar-servicio", {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': token
-            },
-            body: JSON.stringify({ nombre, descripcion, endpoints })
-          });
-          alert(await res.text());
-        }
-
-        async function listar() {
-          const res = await fetch("/servicios", { headers: {'Authorization': token}});
-          const data = await res.json();
-          document.getElementById("servicios").innerHTML = data.map(s => "<li>" + s.nombre + "</li>").join("");
-        }
-      </script>
-    </body>
-    </html>
-    """
-
 @app.post("/autenticar-usuario")
-def login(user: UsuarioLogin):
-    token = autenticar_usuario(user.nombre_usuario, user.contrasena)
-    if not token:
-        raise HTTPException(status_code=401, detail="Credenciales inválidas")
-    return token
+def login(datos: Usuario):
+    return autenticar_usuario(datos.nombre_usuario, datos.contrasena)
 
 @app.post("/registrar-servicio")
-def registrar(data: ServicioInput, authorization: str = Header(None)):
-    rol = obtener_rol_por_token(authorization)
-    if rol != "Administrador":
-        raise HTTPException(status_code=403, detail="No autorizado")
-    return registrar_servicio(data)
+def crear_servicio(servicio: Servicio, token: str = Header(...)):
+    verificar_token(token, ["Administrador"])
+    return registrar_servicio(servicio)
 
-@app.get("/servicios")
-def listar(authorization: str = Header(None)):
-    rol = obtener_rol_por_token(authorization)
-    if not rol:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    return listar_servicios()
+@app.get("/informacion-servicio/{id}")
+def ver_servicio(id: int, token: str = Header(...)):
+    verificar_token(token, ["Administrador", "Orquestador"])
+    servicio = obtener_servicio(id)
+    if not servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    return servicio
+
+@app.delete("/eliminar-servicio/{id}")
+def eliminar(id: int, token: str = Header(...)):
+    verificar_token(token, ["Administrador"])
+    eliminar_servicio(id)
+    return {"mensaje": "Servicio eliminado"}
+
+@app.put("/actualizar-servicio/{id}")
+def actualizar(id: int, servicio: Servicio, token: str = Header(...)):
+    verificar_token(token, ["Administrador"])
+    actualizado = actualizar_servicio(id, servicio)
+    if not actualizado:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    return actualizado
+
+@app.post("/orquestar")
+def orquestar(data: Orquestacion, token: str = Header(...)):
+    verificar_token(token, ["Orquestador", "Administrador"])
+    return {"mensaje": f"Orquestando {data.servicio_destino} con {data.parametros_adicionales}"}

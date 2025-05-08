@@ -1,23 +1,28 @@
-SERVICIOS = []
-contador_id = 1
+from models import Servicio
 
-def registrar_servicio(data):
-    global contador_id
-    servicio = {
-        "id": contador_id,
-        "nombre": data.nombre,
-        "descripcion": data.descripcion,
-        "endpoints": data.endpoints
-    }
-    SERVICIOS.append(servicio)
-    contador_id += 1
+servicios = []
+contador = 1
+
+def registrar_servicio(servicio: Servicio):
+    global contador
+    servicio.id = contador
+    contador += 1
+    servicios.append(servicio)
     return servicio
 
-def listar_servicios():
-    return SERVICIOS
+def obtener_servicio(id: int):
+    for s in servicios:
+        if s.id == id:
+            return s
+    return None
 
-def obtener_servicio(id_servicio: int):
-    for servicio in SERVICIOS:
-        if servicio["id"] == id_servicio:
-            return servicio
+def eliminar_servicio(id: int):
+    global servicios
+    servicios = [s for s in servicios if s.id != id]
+
+def actualizar_servicio(id: int, nuevo_servicio: Servicio):
+    for i, s in enumerate(servicios):
+        if s.id == id:
+            servicios[i] = nuevo_servicio
+            return nuevo_servicio
     return None
