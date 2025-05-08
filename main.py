@@ -1,9 +1,14 @@
+# main.py
 from fastapi import FastAPI, Header, HTTPException
 from auth import autenticar_usuario, verificar_token
 from services import *
 from models import *
 
-app = FastAPI()
+app = FastAPI(title="API de Logística Global", description="Orquestación de servicios REST para la empresa Logística Global.", version="1.0")
+
+@app.get("/")
+def root():
+    return {"mensaje": "Bienvenido a la API de Logística Global. Visita /docs para ver las rutas disponibles."}
 
 @app.post("/autenticar-usuario")
 def login(datos: Usuario):
@@ -35,6 +40,11 @@ def actualizar(id: int, servicio: Servicio, token: str = Header(...)):
     if not actualizado:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     return actualizado
+
+@app.patch("/actualizar-parcial/{id}")
+def actualizar_parcial(id: int, descripcion: str, token: str = Header(...)):
+    verificar_token(token, ["Administrador"])
+    return patch_servicio(id, descripcion)
 
 @app.post("/orquestar")
 def orquestar(data: Orquestacion, token: str = Header(...)):

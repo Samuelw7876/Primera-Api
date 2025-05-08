@@ -26,3 +26,10 @@ def actualizar_servicio(id: int, nuevo_servicio: Servicio):
             servicios[i] = nuevo_servicio
             return nuevo_servicio
     return None
+
+def patch_servicio(id: int, nueva_descripcion: str):
+    for s in servicios:
+        if s.id == id:
+            s.descripcion = nueva_descripcion
+            return s
+    return None

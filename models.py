@@ -10,7 +10,7 @@ class Servicio(BaseModel):
 class Usuario(BaseModel):
     nombre_usuario: str
     contrasena: str
-    rol: str  # "Administrador", "Orquestador", etc.
+    rol: str  # "Administrador", "Orquestador"
 
 class Orquestacion(BaseModel):
     servicio_destino: str
