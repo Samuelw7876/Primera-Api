@@ -1,20 +1,23 @@
-# Datos simulados en memoria
-servicios = []
-reglas = {}
+SERVICIOS = []
+contador_id = 1
 
-def registrar_servicio(datos):
-    servicios.append(datos)
-    return {"mensaje": "Servicio registrado"}
+def registrar_servicio(data):
+    global contador_id
+    servicio = {
+        "id": contador_id,
+        "nombre": data.nombre,
+        "descripcion": data.descripcion,
+        "endpoints": data.endpoints
+    }
+    SERVICIOS.append(servicio)
+    contador_id += 1
+    return servicio
 
-def obtener_info_servicio(id):
-    try:
-        return servicios[int(id)]
-    except:
-        return {"error": "Servicio no encontrado"}
+def listar_servicios():
+    return SERVICIOS
 
-def actualizar_reglas(nuevas_reglas):
-    reglas.update(nuevas_reglas)
-    return {"mensaje": "Reglas actualizadas"}
-
-def orquestar_servicio(datos):
-    return {"mensaje": f"Orquestando servicio {datos.servicio_destino}"}
+def obtener_servicio(id_servicio: int):
+    for servicio in SERVICIOS:
+        if servicio["id"] == id_servicio:
+            return servicio
+    return None

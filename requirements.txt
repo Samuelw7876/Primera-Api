@@ -1,4 +1,2 @@
 fastapi
-fastapi
-uvicorn[standard]
-python-multipart
+uvicorn
